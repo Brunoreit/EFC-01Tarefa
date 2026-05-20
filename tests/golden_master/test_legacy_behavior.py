@@ -16,6 +16,7 @@ def ped_especial(tmp_path, monkeypatch):
     yield s
     s.close()
 
+# Criação de pedidos
 class TestCriacaoPedidosLegado:
 
     def test_pedido_normal_calcula_total(self, sis):
@@ -72,3 +73,78 @@ class TestCriacaoPedidosLegado:
         id_ped = sis.add_ped("Joao", itens, "normal")
         assert isinstance(sis.get_ped(id_ped)["itens"], list)
         assert len(sis.get_ped(id_ped)["itens"]) == 2
+    
+#Pagamentos
+class TestPagamentoLegado:
+
+    def test_cartao_aprova(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        assert sis.proc_pag(id_ped, "cartao", 100) is True
+        assert sis.get_ped(id_ped)["st"] == "aprovado"
+
+    def test_pix_aprova(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        assert sis.proc_pag(id_ped, "pix", 100) is True
+        assert sis.get_ped(id_ped)["st"] == "aprovado"
+
+    def test_boleto_nao_aprova(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        assert sis.proc_pag(id_ped, "boleto", 100) is True
+        assert sis.get_ped(id_ped)["st"] == "pendente"
+
+    def test_valor_insuficiente(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        assert sis.proc_pag(id_ped, "cartao", 50) is False
+
+    def test_metodo_invalido(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        assert sis.proc_pag(id_ped, "cheque", 100) is False
+
+    def test_pedido_inexistente(self, sis):
+        assert sis.proc_pag(9999, "cartao", 500) is False
+
+    def test_valor_exato_aceito(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        assert sis.proc_pag(id_ped, "cartao", 100.0) is True
+
+# Status
+class TestStatusLegado:
+
+    def test_aprovado(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        sis.upd_st(id_ped, "aprovado")
+        assert sis.get_ped(id_ped)["st"] == "aprovado"
+
+    def test_enviado(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        sis.upd_st(id_ped, "enviado")
+        assert sis.get_ped(id_ped)["st"] == "enviado"
+
+    def test_entregue_normal_pontos(self, sis, capsys):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        sis.upd_st(id_ped, "entregue")
+        assert "100 pontos" in capsys.readouterr().out
+
+    def test_entregue_vip_pontos(self, sis, capsys):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Maria", itens, "vip")
+        sis.upd_st(id_ped, "entregue")
+        assert "190 pontos" in capsys.readouterr().out
+
+    def test_entregue_corporativo_pontos(self, sis, capsys):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Empresa", itens, "corporativo")
+        sis.upd_st(id_ped, "entregue")
+        assert "135 pontos" in capsys.readouterr().out
+
+    def test_pedido_inexistente_sem_excecao(self, sis):
+        sis.upd_st(9999, "aprovado")
