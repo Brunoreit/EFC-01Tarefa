@@ -164,3 +164,40 @@ class TestCancelamentoLegado:
         sis.proc_pag(id_ped, "cartao", 100)
         sis.cancelar_pedido(id_ped)
         assert sis.get_ped(id_ped)["st"] == "cancelado"
+
+#Relatorio
+class TestRelatoriosLegado:
+
+    def test_vendas_cabecalho(self, sis, capsys):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        sis.add_ped("Joao", itens, "normal")
+        sis.gerar_rel("vendas")
+        assert "RELATORIO DE VENDAS" in capsys.readouterr().out
+
+    def test_vendas_arquivo(self, sis, tmp_path):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        sis.add_ped("Joao", itens, "normal")
+        sis.gerar_rel("vendas")
+        assert (tmp_path / "rel_vendas.txt").exists()
+        assert "Total de vendas" in (tmp_path / "rel_vendas.txt").read_text()
+
+    def test_clientes_cabecalho(self, sis, capsys):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        sis.add_ped("Joao", itens, "normal")
+        sis.gerar_rel("clientes")
+        assert "RELATORIO DE CLIENTES" in capsys.readouterr().out
+
+    def test_clientes_arquivo(self, sis, tmp_path):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        sis.add_ped("Joao", itens, "normal")
+        sis.gerar_rel("clientes")
+        assert (tmp_path / "rel_clientes.txt").exists()
+
+    def test_calc_tot_cli(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        sis.add_ped("Joao", itens, "normal")
+        sis.add_ped("Joao", itens, "normal")
+        assert sis.calc_tot_cli("Joao") == pytest.approx(200.0)
+
+    def test_calc_tot_cli_inexistente(self, sis):
+        assert sis.calc_tot_cli("Ninguem") == pytest.approx(0.0)
