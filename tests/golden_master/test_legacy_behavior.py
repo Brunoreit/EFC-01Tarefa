@@ -201,3 +201,45 @@ class TestRelatoriosLegado:
 
     def test_calc_tot_cli_inexistente(self, sis):
         assert sis.calc_tot_cli("Ninguem") == pytest.approx(0.0)
+
+#Estoque
+class TestEstoqueLegado:
+
+    def test_valido(self, sis):
+        assert sis.validar_estoque([{"nome": "produto1", "p": 1, "q": 1, "tipo": "normal"}]) is True
+
+    def test_produto_inexistente(self, sis):
+        assert sis.validar_estoque([{"nome": "xyz", "p": 1, "q": 1, "tipo": "normal"}]) is False
+
+    def test_quantidade_excessiva(self, sis):
+        assert sis.validar_estoque([{"nome": "produto2", "p": 1, "q": 999, "tipo": "normal"}]) is False
+
+    def test_multiplos_validos(self, sis):
+        itens = [
+            {"nome": "produto1", "p": 1, "q": 1, "tipo": "normal"},
+            {"nome": "produto2", "p": 1, "q": 1, "tipo": "normal"},
+        ]
+        assert sis.validar_estoque(itens) is True
+
+#PedEspecial
+class TestPedEspecialLegado:
+
+    def test_taxa_15(self, ped_especial):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = ped_especial.add_ped("Joao", itens, "normal")
+        assert ped_especial.get_ped(id_ped)["tot"] == pytest.approx(115.0)
+
+    def test_upd_st_sem_notificacao(self, ped_especial, capsys):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = ped_especial.add_ped("Joao", itens, "normal")
+        capsys.readouterr()  # limpa saída do add_ped (que imprime "Email especial")
+        ped_especial.upd_st(id_ped, "entregue")
+        out = capsys.readouterr().out
+        assert "pontos" not in out
+        # upd_st do PedEspecial só imprime "Pedido especial X -> Y", sem email
+        assert "Email enviado" not in out
+
+    def test_herda_proc_pag(self, ped_especial):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = ped_especial.add_ped("Joao", itens, "normal")
+        assert ped_especial.proc_pag(id_ped, "cartao", 115) is True
