@@ -1,0 +1,32 @@
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Pytest
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Banco de dados gerado pelos testes / main
+loja.db
+*.db
+
+# Relatórios gerados
+rel_vendas.txt
+rel_clientes.txt
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
