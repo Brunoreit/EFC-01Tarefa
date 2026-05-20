@@ -190,6 +190,32 @@ class PedEspecial(Sis):
             print(f"Pedido especial {id} -> {s}")
 
 
+class TestNotificacoesLegado:
+
+    def test_normal_email(self, sis, capsys):
+        sis.add_ped("Joao", [{"nome": "p1", "p": 10, "q": 1, "tipo": "normal"}], "normal")
+        assert "Email enviado para Joao" in capsys.readouterr().out
+
+    def test_vip_email_e_sms(self, sis, capsys):
+        sis.add_ped("Maria", [{"nome": "p1", "p": 10, "q": 1, "tipo": "normal"}], "vip")
+        out = capsys.readouterr().out
+        assert "Email enviado para Maria" in out
+        assert "SMS enviado para Maria" in out
+
+    def test_corporativo_email_e_gerente(self, sis, capsys):
+        sis.add_ped("Empresa", [{"nome": "p1", "p": 10, "q": 1, "tipo": "normal"}], "corporativo")
+        out = capsys.readouterr().out
+        assert "Email enviado para Empresa" in out
+        assert "gerente de conta" in out
+
+    def test_aprovado_vip_sms(self, sis, capsys):
+        id_ped = sis.add_ped("Maria", [{"nome": "p1", "p": 10, "q": 1, "tipo": "normal"}], "vip")
+        capsys.readouterr()
+        sis.upd_st(id_ped, "aprovado")
+        assert "SMS enviado para Maria" in capsys.readouterr().out
+
+
+
 def main():
     s = Sis()
     its1 = [
