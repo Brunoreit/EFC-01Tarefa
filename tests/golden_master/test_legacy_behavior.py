@@ -148,3 +148,19 @@ class TestStatusLegado:
 
     def test_pedido_inexistente_sem_excecao(self, sis):
         sis.upd_st(9999, "aprovado")
+
+#Cancelamento
+class TestCancelamentoLegado:
+
+    def test_cancelar(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        sis.cancelar_pedido(id_ped)
+        assert sis.get_ped(id_ped)["st"] == "cancelado"
+
+    def test_cancelar_aprovado(self, sis):
+        itens = [{"nome": "p1", "p": 100, "q": 1, "tipo": "normal"}]
+        id_ped = sis.add_ped("Joao", itens, "normal")
+        sis.proc_pag(id_ped, "cartao", 100)
+        sis.cancelar_pedido(id_ped)
+        assert sis.get_ped(id_ped)["st"] == "cancelado"
