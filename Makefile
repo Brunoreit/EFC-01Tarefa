@@ -4,15 +4,15 @@ test:
 	pytest -v
 
 cov:
-	pytest --cov=. --cov-report=term-missing --cov-report=html
+	pytest --cov=src --cov-report=term-missing --cov-report=html
 
 lint:
-	ruff check legacy.py tests/
+	ruff check src/ tests/
 
 type:
-	mypy --strict legacy.py
+	mypy --strict src/
 
 complexity:
-	radon cc legacy.py -s -a
+	radon cc src/ -s -a
 
 all: lint type test cov complexity

@@ -12,7 +12,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.coverage.run]
-source = ["."]
+source = ["src"]
 omit = ["tests/*"]
 
 [tool.mypy]

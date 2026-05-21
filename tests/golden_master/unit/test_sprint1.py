@@ -14,6 +14,11 @@ from src.services.payment_service import PaymentService
 from src.services.report_service import ReportService
 from src.services.stock_service import StockService
 
+
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
+
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
@@ -36,6 +41,10 @@ def order_service(repo, notification):
 def payment_service(repo):
     return PaymentService(repo)
 
+
+# ===========================================================================
+# Pessoa 2 — Repository
+# ===========================================================================
 
 class TestOrderRepository:
 
@@ -67,6 +76,10 @@ class TestOrderRepository:
         repo.save(Order(cliente="B", itens=[], tipo="vip", total=20.0))
         assert len(repo.find_all()) == 2
 
+
+# ===========================================================================
+# Pessoa 3 — OrderService + StockService
+# ===========================================================================
 
 class TestOrderService:
 
@@ -154,6 +167,10 @@ class TestStockService:
         assert StockService().validate(itens) is True
 
 
+# ===========================================================================
+# Pessoa 4 — PaymentService + NotificationService
+# ===========================================================================
+
 class TestPaymentService:
 
     def _itens(self):
@@ -215,6 +232,10 @@ class TestNotificationService:
         out = capsys.readouterr().out
         assert "SMS enviado para Maria" in out
 
+
+# ===========================================================================
+# Pessoa 5 — ReportService
+# ===========================================================================
 
 class TestReportService:
 
