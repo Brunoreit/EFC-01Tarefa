@@ -1,25 +1,24 @@
 from src.interfaces.i_notification_service import INotificationService
+from src.observers.notification_observer import build_publisher
 
 
-class PrintNotificationService(INotificationService):
+class ObserverNotificationService(INotificationService):
     """
-    Implementação concreta de notificação via print.
-    No Sprint 2 será substituída pelo padrão Observer.
+    Implementação de notificação usando padrão Observer/Pub-Sub.
+    Despacha eventos para os observers registrados (OCP).
     """
 
     def notify_order_created(self, cliente: str, tipo_cliente: str) -> None:
-        print(f"Email enviado para {cliente}: Pedido recebido!")
-        if tipo_cliente == "vip":
-            print(f"SMS enviado para {cliente}: Pedido VIP recebido!")
-        elif tipo_cliente == "corporativo":
-            print(f"Notificacao enviada ao gerente de conta de {cliente}")
+        publisher = build_publisher(tipo_cliente)
+        publisher.publish(cliente, tipo_cliente, "Pedido recebido!")
 
     def notify_status_changed(self, cliente: str, tipo_cliente: str, status: str) -> None:
-        if status == "aprovado":
-            print(f"Email enviado para {cliente}: Pedido aprovado!")
-            if tipo_cliente == "vip":
-                print(f"SMS enviado para {cliente}: Pedido aprovado!")
-        elif status == "enviado":
-            print(f"Email enviado para {cliente}: Pedido enviado!")
-        elif status == "entregue":
-            print(f"Email enviado para {cliente}: Pedido entregue!")
+        publisher = build_publisher(tipo_cliente)
+        eventos = {
+            "aprovado": "Pedido aprovado!",
+            "enviado": "Pedido enviado!",
+            "entregue": "Pedido entregue!",
+        }
+        evento = eventos.get(status)
+        if evento:
+            publisher.publish(cliente, tipo_cliente, evento)
