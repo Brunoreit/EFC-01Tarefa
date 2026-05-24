@@ -4,6 +4,12 @@ from src.interfaces.i_notification_service import INotificationService
 from src.models.order import Order
 from src.models.order_item import OrderItem
 from src.repositories.interfaces import IOrderRepository
+from src.strategies.discount_strategy import (
+    CUSTOMER_DISCOUNT_REGISTRY,
+    ITEM_DISCOUNT_REGISTRY,
+    NormalCustomerDiscount,
+    NormalDiscount,
+)
 
 
 class OrderService:
@@ -57,19 +63,10 @@ class OrderService:
     def _calculate_total(self, itens: List[OrderItem], tipo: str) -> float:
         total = 0.0
         for item in itens:
-            if item.tipo == "normal":
-                total += item.preco * item.quantidade
-            elif item.tipo == "desc10":
-                total += item.preco * item.quantidade * 0.9
-            elif item.tipo == "desc20":
-                total += item.preco * item.quantidade * 0.8
-            elif item.tipo == "frete_gratis":
-                total += item.preco * item.quantidade
-        if tipo == "vip":
-            total *= 0.95
-        elif tipo == "corporativo":
-            total *= 0.90
-        return total
+            strategy = ITEM_DISCOUNT_REGISTRY.get(item.tipo, NormalDiscount())
+            total += strategy.apply(item.preco, item.quantidade)
+        customer_strategy = CUSTOMER_DISCOUNT_REGISTRY.get(tipo, NormalCustomerDiscount())
+        return customer_strategy.apply(total)
 
     def _award_points(self, order: Order) -> None:
         if order.tipo == "vip":
