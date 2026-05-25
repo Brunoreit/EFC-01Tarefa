@@ -1,4 +1,4 @@
-from src.strategies.discount_strategy import IDiscountStrategy
+from src.strategies.discount_strategy import IItemDiscountStrategy as IDiscountStrategy
 
 
 class VolumeDiscountStrategy(IDiscountStrategy):

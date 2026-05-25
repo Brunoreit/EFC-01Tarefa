@@ -1,5 +1,5 @@
 from src.repositories.order_repository import OrderRepository
-from src.services.notification_service import PrintNotificationService
+from src.services.notification_service import ObserverNotificationService
 from src.services.order_service import OrderService
 from src.services.payment_service import PaymentService
 from src.services.report_service import ReportService
@@ -9,7 +9,7 @@ from src.services.stock_service import StockService
 def main() -> None:
     # Injeção de dependência explícita (DIP)
     repo = OrderRepository()
-    notification = PrintNotificationService()
+    notification = ObserverNotificationService()
     order_service = OrderService(repo, notification)
     payment_service = PaymentService(repo)
     report_service = ReportService(repo)

@@ -1,16 +1,21 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Type
 
-from src.models.order import Order
+from src.models.order import CustomerType, Order
 from src.models.order_item import OrderItem
-from src.strategies.discount_strategy import CUSTOMER_DISCOUNT_MAP, ITEM_DISCOUNT_MAP
+from src.strategies.discount_strategy import (
+    CUSTOMER_DISCOUNT_REGISTRY,
+    ITEM_DISCOUNT_REGISTRY,
+    NormalCustomerDiscount,
+    NormalDiscount,
+)
 
 
 class IOrderFactory(ABC):
     """Factory Method: define o esqueleto de criação de pedidos."""
 
     @abstractmethod
-    def customer_type(self) -> str:
+    def customer_type(self) -> CustomerType:
         ...
 
     def create(self, cliente: str, itens: List[OrderItem]) -> Order:
@@ -25,28 +30,30 @@ class IOrderFactory(ABC):
     def _calculate_total(self, itens: List[OrderItem]) -> float:
         total = 0.0
         for item in itens:
-            strategy_class = ITEM_DISCOUNT_MAP.get(item.tipo, ITEM_DISCOUNT_MAP["normal"])
-            total += strategy_class().apply(item.preco, item.quantidade)
-        multiplier = CUSTOMER_DISCOUNT_MAP.get(self.customer_type(), 1.0)
-        return total * multiplier
+            strategy = ITEM_DISCOUNT_REGISTRY.get(item.tipo, NormalDiscount())
+            total += strategy.apply(item.preco, item.quantidade)
+        customer_strategy = CUSTOMER_DISCOUNT_REGISTRY.get(
+            self.customer_type(), NormalCustomerDiscount()
+        )
+        return customer_strategy.apply(total)
 
 
 class NormalOrderFactory(IOrderFactory):
-    def customer_type(self) -> str:
+    def customer_type(self) -> CustomerType:
         return "normal"
 
 
 class VipOrderFactory(IOrderFactory):
-    def customer_type(self) -> str:
+    def customer_type(self) -> CustomerType:
         return "vip"
 
 
 class CorporativoOrderFactory(IOrderFactory):
-    def customer_type(self) -> str:
+    def customer_type(self) -> CustomerType:
         return "corporativo"
 
 
-ORDER_FACTORY_MAP: dict = {
+ORDER_FACTORY_MAP: dict[str, Type[IOrderFactory]] = {
     "normal": NormalOrderFactory,
     "vip": VipOrderFactory,
     "corporativo": CorporativoOrderFactory,

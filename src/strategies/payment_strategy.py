@@ -45,7 +45,7 @@ class BoletoStrategy(IPaymentStrategy):
         return False
 
 
-PAYMENT_STRATEGY_MAP: dict = {
+PAYMENT_STRATEGY_MAP: dict[str, type[IPaymentStrategy]] = {
     "cartao": CartaoStrategy,
     "pix": PixStrategy,
     "boleto": BoletoStrategy,

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 ItemType = Literal["normal", "desc10", "desc20", "frete_gratis"]
 
@@ -12,7 +12,7 @@ class OrderItem:
     tipo: ItemType
 
     @classmethod
-    def from_dict(cls, d: dict) -> "OrderItem":
+    def from_dict(cls, d: dict[str, Any]) -> "OrderItem":
         return cls(
             nome=d["nome"],
             preco=d["p"],
@@ -20,7 +20,7 @@ class OrderItem:
             tipo=d["tipo"],
         )
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "nome": self.nome,
             "p": self.preco,

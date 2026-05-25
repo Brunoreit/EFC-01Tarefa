@@ -8,7 +8,7 @@ import pytest
 from src.models.order import Order
 from src.models.order_item import OrderItem
 from src.repositories.order_repository import OrderRepository
-from src.services.notification_service import PrintNotificationService
+from src.services.notification_service import ObserverNotificationService as PrintNotificationService
 from src.services.order_service import OrderService
 from src.services.payment_service import PaymentService
 from src.services.report_service import ReportService

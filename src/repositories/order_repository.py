@@ -1,6 +1,6 @@
 import json
 import sqlite3
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from src.models.order import Order
 from src.models.order_item import OrderItem
@@ -56,7 +56,7 @@ class OrderRepository(IOrderRepository):
         self._db.close()
 
     @staticmethod
-    def _row_to_order(row: tuple) -> Order:
+    def _row_to_order(row: Any) -> Order:
         itens = [OrderItem.from_dict(i) for i in json.loads(row[2])]
         return Order(
             id=row[0],

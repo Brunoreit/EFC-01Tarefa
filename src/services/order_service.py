@@ -1,7 +1,7 @@
-from typing import List, Optional
+from typing import Any, List, Optional, cast
 
 from src.interfaces.i_notification_service import INotificationService
-from src.models.order import Order
+from src.models.order import CustomerType, Order, OrderStatus
 from src.models.order_item import OrderItem
 from src.repositories.interfaces import IOrderRepository
 from src.strategies.discount_strategy import (
@@ -26,10 +26,10 @@ class OrderService:
         self._repository = repository
         self._notification = notification_service
 
-    def create_order(self, cliente: str, itens_raw: List[dict], tipo: str) -> int:
+    def create_order(self, cliente: str, itens_raw: List[dict[str, Any]], tipo: str) -> int:
         itens = [OrderItem.from_dict(i) for i in itens_raw]
         total = self._calculate_total(itens, tipo)
-        order = Order(cliente=cliente, itens=itens, tipo=tipo, total=total)
+        order = Order(cliente=cliente, itens=itens, tipo=cast(CustomerType, tipo), total=total)
         order_id = self._repository.save(order)
         order.id = order_id
         self._notification.notify_order_created(cliente, tipo)
@@ -43,7 +43,7 @@ class OrderService:
         if not order:
             return
         self._repository.update_status(order_id, status)
-        order.status = status
+        order.status = cast(OrderStatus, status)
         self._notification.notify_status_changed(order.cliente, order.tipo, status)
         if status == "entregue":
             self._award_points(order)

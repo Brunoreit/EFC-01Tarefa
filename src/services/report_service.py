@@ -23,7 +23,7 @@ class ReportService:
 
     def customers_report(self) -> None:
         orders = self._repository.find_all()
-        seen: dict = {}
+        seen: dict[str, str] = {}
         for order in orders:
             if order.cliente not in seen:
                 seen[order.cliente] = order.tipo
