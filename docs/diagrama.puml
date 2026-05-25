@@ -1,0 +1,254 @@
+@startuml diagrama_efc1
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam linetype ortho
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
+
+' ==================== MODELS ====================
+package "models" #EEEEEE {
+    class Order {
+        +cliente: str
+        +itens: List[OrderItem]
+        +tipo: CustomerType
+        +total: float
+        +status: OrderStatus
+        +data: str
+        +id: Optional[int]
+    }
+
+    class OrderItem {
+        +nome: str
+        +preco: float
+        +quantidade: int
+        +tipo: ItemType
+        +from_dict(d): OrderItem
+        +to_dict(): dict
+    }
+
+    Order "1" *-- "many" OrderItem
+}
+
+' ==================== INTERFACES ====================
+package "interfaces" #DDEEFF {
+    abstract class INotificationService <<ABC>> {
+        {abstract} +notify_order_created(cliente, tipo): void
+        {abstract} +notify_status_changed(cliente, tipo, status): void
+    }
+
+    abstract class IOrderRepository <<ABC>> {
+        {abstract} +save(order): int
+        {abstract} +find_by_id(id): Optional[Order]
+        {abstract} +find_by_customer(cliente): List[Order]
+        {abstract} +find_all(): List[Order]
+        {abstract} +update_status(id, status): void
+    }
+}
+
+' ==================== REPOSITORIES ====================
+package "repositories" #EEFFEE {
+    class OrderRepository {
+        -_db: Connection
+        -_cursor: Cursor
+        +save(order): int
+        +find_by_id(id): Optional[Order]
+        +find_by_customer(cliente): List[Order]
+        +find_all(): List[Order]
+        +update_status(id, status): void
+        +close(): void
+    }
+
+    OrderRepository ..|> IOrderRepository
+    OrderRepository ..> Order : persiste
+}
+
+' ==================== STRATEGIES ====================
+package "strategies" #FFF8DC {
+
+    ' --- Desconto por item ---
+    abstract class IItemDiscountStrategy <<ABC>> {
+        {abstract} +apply(preco, quantidade): float
+    }
+
+    class NormalDiscount {
+        +apply(preco, quantidade): float
+    }
+    class Desc10Discount {
+        +apply(preco, quantidade): float
+    }
+    class Desc20Discount {
+        +apply(preco, quantidade): float
+    }
+    class FreteGratisDiscount {
+        +apply(preco, quantidade): float
+    }
+    class VolumeDiscountStrategy <<OCP>> {
+        -_base: IItemDiscountStrategy
+        +apply(preco, quantidade): float
+    }
+
+    NormalDiscount ..|> IItemDiscountStrategy
+    Desc10Discount ..|> IItemDiscountStrategy
+    Desc20Discount ..|> IItemDiscountStrategy
+    FreteGratisDiscount ..|> IItemDiscountStrategy
+    VolumeDiscountStrategy ..|> IItemDiscountStrategy
+    VolumeDiscountStrategy o--> IItemDiscountStrategy : decora
+
+    ' --- Desconto por cliente ---
+    abstract class ICustomerDiscountStrategy <<ABC>> {
+        {abstract} +apply(total): float
+    }
+
+    class NormalCustomerDiscount {
+        +apply(total): float
+    }
+    class VipDiscount {
+        +apply(total): float
+    }
+    class CorporativoDiscount {
+        +apply(total): float
+    }
+
+    NormalCustomerDiscount ..|> ICustomerDiscountStrategy
+    VipDiscount ..|> ICustomerDiscountStrategy
+    CorporativoDiscount ..|> ICustomerDiscountStrategy
+
+    ' --- Pagamento ---
+    abstract class IPaymentStrategy <<ABC>> {
+        {abstract} +process(valor): bool
+        {abstract} +approves_order(): bool
+    }
+
+    class CartaoStrategy {
+        +process(valor): bool
+        +approves_order(): bool
+    }
+    class PixStrategy {
+        +process(valor): bool
+        +approves_order(): bool
+    }
+    class BoletoStrategy {
+        +process(valor): bool
+        +approves_order(): bool
+    }
+    class CriptoStrategy <<OCP>> {
+        +process(valor): bool
+        +approves_order(): bool
+    }
+
+    CartaoStrategy ..|> IPaymentStrategy
+    PixStrategy ..|> IPaymentStrategy
+    BoletoStrategy ..|> IPaymentStrategy
+    CriptoStrategy ..|> IPaymentStrategy
+}
+
+' ==================== OBSERVERS ====================
+package "observers" #FFE8E8 {
+    abstract class INotificationObserver <<ABC>> {
+        {abstract} +notify(cliente, tipo_cliente, evento): void
+    }
+
+    class EmailObserver {
+        +notify(cliente, tipo_cliente, evento): void
+    }
+    class SmsObserver {
+        +notify(cliente, tipo_cliente, evento): void
+    }
+    class GerenteObserver {
+        +notify(cliente, tipo_cliente, evento): void
+    }
+    class WhatsAppObserver <<OCP>> {
+        +notify(cliente, tipo_cliente, evento): void
+    }
+
+    class NotificationPublisher {
+        -_observers: List[INotificationObserver]
+        +subscribe(observer): void
+        +unsubscribe(observer): void
+        +publish(cliente, tipo_cliente, evento): void
+    }
+
+    EmailObserver ..|> INotificationObserver
+    SmsObserver ..|> INotificationObserver
+    GerenteObserver ..|> INotificationObserver
+    WhatsAppObserver ..|> INotificationObserver
+    NotificationPublisher o--> INotificationObserver : notifica
+}
+
+' ==================== FACTORIES ====================
+package "factories" #F0E8FF {
+    abstract class IOrderFactory <<ABC>> {
+        {abstract} +customer_type(): CustomerType
+        +create(cliente, itens): Order
+        -_calculate_total(itens): float
+    }
+
+    class NormalOrderFactory {
+        +customer_type(): CustomerType
+    }
+    class VipOrderFactory {
+        +customer_type(): CustomerType
+    }
+    class CorporativoOrderFactory {
+        +customer_type(): CustomerType
+    }
+
+    NormalOrderFactory ..|> IOrderFactory
+    VipOrderFactory ..|> IOrderFactory
+    CorporativoOrderFactory ..|> IOrderFactory
+
+    IOrderFactory ..> Order : cria
+    IOrderFactory ..> IItemDiscountStrategy : usa
+    IOrderFactory ..> ICustomerDiscountStrategy : usa
+}
+
+' ==================== SERVICES ====================
+package "services" #E8F4FF {
+    class OrderService {
+        -_repository: IOrderRepository
+        -_notification: INotificationService
+        +create_order(cliente, itens, tipo): int
+        +get_order(id): Optional[Order]
+        +update_status(id, status): void
+        +cancel_order(id): void
+        +total_by_customer(cliente): float
+    }
+
+    class PaymentService {
+        -_repository: IOrderRepository
+        +process(order_id, method, amount): bool
+    }
+
+    class ReportService {
+        -_repository: IOrderRepository
+        +sales_report(): void
+        +customers_report(): void
+    }
+
+    class StockService {
+        +validate(itens): bool
+    }
+
+    class ObserverNotificationService {
+        +notify_order_created(cliente, tipo): void
+        +notify_status_changed(cliente, tipo, status): void
+    }
+
+    OrderService --> IOrderRepository
+    OrderService --> INotificationService
+    OrderService ..> IItemDiscountStrategy : usa
+    OrderService ..> ICustomerDiscountStrategy : usa
+
+    PaymentService --> IOrderRepository
+    PaymentService ..> IPaymentStrategy : usa
+
+    ReportService --> IOrderRepository
+
+    ObserverNotificationService ..|> INotificationService
+    ObserverNotificationService ..> NotificationPublisher : cria e usa
+}
+
+@enduml
