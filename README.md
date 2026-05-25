@@ -3,10 +3,15 @@
 **Grupo 02**
 
 Integrantes:
-BRUNO REITANO FIGUEROLA 
+
+BRUNO REITANO FIGUEROLA
+
 GABRIEL FLORES BONATTO 
+
 HENRY GABRIEL PIOZZI 
+
 PEDRO XIMENES COSTA 
+
 ROGÉRIO MEDINA 
 
 Refatoração de um sistema legado de gestão de pedidos (`legacy.py`), aplicando princípios SOLID, Clean Code e padrões de projeto GoF. O código original foi mantido intacto como referência; toda a lógica refatorada está em `src/`.
